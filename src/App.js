@@ -6,6 +6,8 @@ import { v4 as uuid } from 'uuid';
 import { listNotes } from './graphql/queries';
 import { createNote as CreateNote } from './graphql/mutations';
 
+// Variable declariaiton
+const CLIENT_ID = uuid();
 
 // Variable object declaration
 const initialState = {
@@ -20,6 +22,12 @@ function reducer(state, action) {
   switch(action.type) {
     case 'SET_NOTES':
         return { ...state, notes: action.notes, loading: false };
+    case 'ADD_NOTE':
+        return { ...state, notes: [action.note, ...state.notes]};
+    case 'RESET_FORM':
+        return { ...state, form: initialState.form };
+    case 'SET_INPUT':
+        return { ...state, form: { ...state.form, [action.name]: action.value } }
     case 'ERROR':
         return { ...state, loading: false, error: true };
     default:
@@ -30,7 +38,7 @@ function reducer(state, action) {
 const App = () => {
 
   // state and dispatch variables created and useReducer called using reducer and initialState passed to it 
-  const [state, dispatch] = useReducer(reducer, initialState)
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   // fetch notes function created that will call the AppSync API and set the notes array once the APY call is successful 
   const fetchNotes = async() => {
@@ -45,6 +53,32 @@ const App = () => {
     }
   };
 
+  const createNote = async() => {
+    const { form } = state; // destructuring - form element out of state
+
+    if (!form.name || !form.description) {
+       return alert('please enter a name and description')
+    };
+    
+    const note = { ...form, clientId: CLIENT_ID, completed: false, id: uuid() };
+    dispatch({ type: 'ADD_NOTE', note });
+    dispatch({ type: 'RESET_FORM' });
+
+    try {
+      await API.graphql({
+        query: CreateNote,
+        variables: { input: note }
+      });
+      console.log('successfully created note!')
+    } catch (err) {
+      console.error("error: ", err)
+    };
+  };
+
+  const onChange = (e) => {
+    dispatch({ type: 'SET_INPUT', name: e.target.name, value: e.target.value });
+  };
+
   // eseEffect hook exececutes when the page first loads and sets to an empty array
   useEffect(() => {
     fetchNotes()
@@ -56,7 +90,7 @@ const App = () => {
     input: {marginBottom: 10},
     item: { textAlign: 'left' },
     p: { color: '#1890ff' }
-  }
+  };
 
   // function calls every single item in the list
   function renderItem(item) {
@@ -67,19 +101,37 @@ const App = () => {
             description={item.description}
           />
         </List.Item>
-      )
+      );
     };
 
 
   return (
     <div style={styles.container}>
-    <List
-      loading={state.loading}
-      dataSource={state.notes}
-      renderItem={renderItem}
-    />
+        <Input
+            onChange={onChange}
+            value={state.form.name}
+            placeholder="Note Name"
+            name='name'
+            style={styles.input}
+        />
+        <Input
+            onChange={onChange}
+            value={state.form.description}
+            placeholder="Note description"
+            name='description'
+            style={styles.input}
+        />
+        <Button
+            onClick={createNote}
+            type="primary"
+        >Create Note</Button>
+      <List
+          loading={state.loading}
+          dataSource={state.notes}
+          renderItem={renderItem}
+      />
   </div>
   );
-}
+};
 
 export default App;
