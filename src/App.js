@@ -136,6 +136,10 @@ const App = () => {
       return () => subscription.unsubscribe();
   }, []);
 
+  // Completed notes tracker variables
+    const completedNotes = state.notes.filter(x => x.completed).length;
+    const totalNotes = state.notes.length
+
   // variable for styling
   const styles = {
     container: {padding: 20},
@@ -163,9 +167,9 @@ const App = () => {
       );
     };
 
-
   return (
     <div style={styles.container}>
+        <h2>Completed: {completedNotes}  ||   Total: {totalNotes}</h2>
         <Input
             onChange={onChange}
             value={state.form.name}
