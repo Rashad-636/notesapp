@@ -9,6 +9,7 @@ import {
   deleteNote as DeleteNote, 
   updateNote as UpdateNote
 } from './graphql/mutations';
+import { onCreateNote } from './graphql/subscriptions';
 
 // Variable declariaiton
 const CLIENT_ID = uuid();
@@ -119,9 +120,20 @@ const App = () => {
     dispatch({ type: 'SET_INPUT', name: e.target.name, value: e.target.value });
   };
 
-  // eseEffect hook exececutes when the page first loads and sets to an empty array
+  // eseEffect hook executes when the page first loads and sets to an empty array
   useEffect(() => {
     fetchNotes()
+    const subscription = API.graphql({
+      query: onCreateNote
+    })
+      .subscribe({
+        next: noteData => {
+          const note = noteData.value.data.onCreateNote
+          if (CLIENT_ID === note.clientId) return
+          dispatch({ type: 'ADD_NOTE', note })
+        }
+      })
+      return () => subscription.unsubscribe();
   }, []);
 
   // variable for styling
