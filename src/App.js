@@ -19,7 +19,8 @@ const initialState = {
   notes: [],
   loading: true,
   error: false,
-  form: { name: '', description: '' }
+  form: { name: '', description: '' },
+  important: false
 };
 
 // Reducer function
@@ -99,7 +100,7 @@ const App = () => {
     }
   };
 
-  //Update Note  
+  // Update Note  
   const updateNote = async(note) => {
     const index = state.notes.findIndex(n => n.id === note.id)
     const notes = [...state.notes]
@@ -120,7 +121,7 @@ const App = () => {
     dispatch({ type: 'SET_INPUT', name: e.target.name, value: e.target.value });
   };
 
-  // eseEffect hook executes when the page first loads and sets to an empty array
+  // useEffect hook executes when the page first loads and sets to an empty array
   useEffect(() => {
     fetchNotes()
     const subscription = API.graphql({
@@ -136,10 +137,6 @@ const App = () => {
       return () => subscription.unsubscribe();
   }, []);
 
-  // Completed notes tracker variables
-    const completedNotes = state.notes.filter(x => x.completed).length;
-    const totalNotes = state.notes.length
-
   // variable for styling
   const styles = {
     container: {padding: 20},
@@ -148,16 +145,30 @@ const App = () => {
     p: { color: '#1890ff' }
   };
 
+  // Completed notes tracker variables
+  const completedNotes = state.notes.filter(x => x.completed).length;
+  const totalNotes = state.notes.length
+
   // function calls every single item in the list
   function renderItem(item) {
+    //Mark note important (!) 
+    const makeImportant = () => {
+      const index = state.notes.findIndex(n => n.id === item.id)
+      const notes = [...state.notes]
+      const importantNote = {...item, name: item.name + '****'};
+      notes[index] = importantNote;
+      dispatch({ type: 'SET_NOTES', notes})
+   };
+
       return (
         <List.Item 
           style={styles.item}
           actions={[
-            <p style={styles.p} onClick={() => deleteNote(item)}>Delete</p>,
-            <p style={styles.p} onClick={() => updateNote(item)}>
+            <p style={styles.p} onClick={() => deleteNote(item)}>Delete</p>
+            ,<p style={styles.p} onClick={() => updateNote(item)}>
               {item.completed ? 'completed' : 'mark completed'}
             </p>
+            , <Button onClick={makeImportant}>!</Button>
           ]}>
           <List.Item.Meta
             title={item.name}
@@ -169,7 +180,6 @@ const App = () => {
 
   return (
     <div style={styles.container}>
-        <h2>Completed: {completedNotes}  ||   Total: {totalNotes}</h2>
         <Input
             onChange={onChange}
             value={state.form.name}
@@ -193,6 +203,8 @@ const App = () => {
           dataSource={state.notes}
           renderItem={renderItem}
       />
+
+    <h2>{completedNotes} / {totalNotes} completed</h2>
   </div>
   );
 };
