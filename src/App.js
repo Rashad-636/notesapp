@@ -33,7 +33,9 @@ function reducer(state, action) {
     case 'RESET_FORM':
         return { ...state, form: initialState.form };
     case 'SET_INPUT':
-        return { ...state, form: { ...state.form, [action.name]: action.value } }
+        return { ...state, form: { ...state.form, [action.name]: action.value }};
+    case 'ADD_EXCLAMATION':
+        return { ...state, notes: action.notes, loading:false, important: true}
     case 'ERROR':
         return { ...state, loading: false, error: true };
     default:
@@ -151,13 +153,14 @@ const App = () => {
 
   // function calls every single item in the list
   function renderItem(item) {
+    
     //Mark note important (!) 
     const makeImportant = () => {
       const index = state.notes.findIndex(n => n.id === item.id)
       const notes = [...state.notes]
-      const importantNote = {...item, name: item.name + '****'};
+      const importantNote = {...item, name: item.name + '!!'};
       notes[index] = importantNote;
-      dispatch({ type: 'SET_NOTES', notes})
+      dispatch({ type: 'ADD_EXCLAMATION', notes})
    };
 
       return (
